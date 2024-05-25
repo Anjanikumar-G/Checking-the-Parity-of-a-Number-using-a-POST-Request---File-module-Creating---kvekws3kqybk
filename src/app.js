@@ -1,37 +1,30 @@
-const http = require('http');
+const http = require("http");
 
 const server = http.createServer((req, res) => {
-  if (req.method === 'POST' && req.url === '/') {
-    let body = '';
-    req.on('data', chunk => {
-      body += chunk.toString();
-    });
-    req.on('end', () => {
-      try {
-        const data = JSON.parse(body);
-        const num1 = data.num1;
-        if (typeof num1 === 'number' && Number.isInteger(num1)) {
-          if (num1 % 2 === 0) {
-            res.writeHead(200, { 'Content-Type': 'text/plain' });
-            res.end(`The number ${num1} is even`);
-          } else {
-            res.writeHead(404, { 'Content-Type': 'text/plain' });
-            res.end(`The number ${num1} is odd`);
-          }
-        } else {
-          res.writeHead(400, { 'Content-Type': 'text/plain' });
-          res.end('Invalid payload. Please provide an integer value for num1.');
-        }
-      } catch (err) {
-        res.writeHead(400, { 'Content-Type': 'text/plain' });
-        res.end('Invalid payload. Please provide a valid JSON object with a single integer field "num1".');
+  if (req.method === "POST") {
+    const chunks = [];
+
+    req.on("data", (chunk) => {
+      const buf = Buffer.from(chunk);
+      const str = buf.toString();
+      chunks.push(str);
+      const obj = JSON.parse(chunks);
+      const value = obj.num1;
+
+      // Write the code here to check if the number is odd or even
+      if (!value || Number.isNaN(value)) {
+        res.statusCode = 400;
+        res.end("Bad Request");
+      }
+      if (value%2 === 0) {
+        res.statusCode = 200;
+        res.end(`The number ${value} is even`);
+      } else {
+        res.statusCode = 404;
+        res.end(`The number ${value} is odd`);
       }
     });
-  } else {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Invalid endpoint. Please send a POST request to "/".');
   }
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+module.exports = server;
